@@ -16,12 +16,6 @@ async function executeAdbCommand(command) {
   }
 }
 
-async function goToHomeScreen() {
-  await executeAdbCommand('shell input keyevent KEYCODE_HOME');
-  await executeAdbCommand('shell input keyevent KEYCODE_HOME');
-  log('Navigated to home screen.');
-}
-
 async function tap(x, y) {
   await executeAdbCommand(`shell input tap ${x} ${y}`);
   log(`Tapped at (${x}, ${y}).`);
@@ -109,7 +103,6 @@ function extractUiElements(uiTree) {
   function traverse(node) {
     if (node.$) {
       const bounds = node.$.bounds || '';
-      // Match pattern like "[x1,y1][x2,y2]"
       const match = bounds.match(/(\d+),(\d+)(\d+),(\d+)/);
       if (match) {
         const [_, x1, y1, x2, y2] = match.map(Number);
@@ -163,10 +156,16 @@ async function runAgent() {
     await checkAdbConnection();
     const userCommand = await askGoal();
     if (!userCommand) {
-      await showToast('No command provided.');
-      return;
+      return await showToast('No command provided.');
     }
     conversation.push({ role: 'user', content: userCommand });
+    
+    /*
+        // Go to Homescreen
+    await executeAdbCommand('shell input keyevent KEYCODE_HOME');
+    await executeAdbCommand('shell input keyevent KEYCODE_HOME');
+    log('Navigated to home screen.');
+    */
     
     while (true) {
       const context = await getContext();
@@ -176,9 +175,9 @@ async function runAgent() {
         model: 'qwen-2.5-32b',
         // Best model for this In my opinion, feel free to play around with other models
         messages: conversation,
-        temperature: 0.15,
+        temperature: 0.175,
         // Tweak the temperature to your liking
-        max_completion_tokens: 300
+        max_completion_tokens: 500
         // 50 Recommended but isn't useful for typing stuff.
       });
       const aiOutput = response.choices[0].message.content.trim();
